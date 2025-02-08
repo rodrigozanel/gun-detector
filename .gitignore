@@ -1,0 +1,11 @@
+# Python bytecode files and caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment folders
+env/
+venv/
+ENV/
+.venv/
+.DS_Store
