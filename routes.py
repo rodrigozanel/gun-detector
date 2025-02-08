@@ -1,64 +1,69 @@
 # routes.py
 from flask import Flask, Response, request, render_template
 from models.gun_detector import GunDetector
+#from models.custom_detector import CustomDetector  # If implemented
 from models.image_saver import ImageSaver
 from controllers.video_controller import VideoController
 from datetime import datetime
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates')
 
-# Initialize our model components.
-gun_detector = GunDetector(
-    model_path="yolo11x.pt",
-    gun_class_ids=[42, 43, 76],  # Adjust these to match your target classes.
-    conf_threshold=0.55,
-    gun_map={42: "Garfo", 43: "Knife", 76: "Tesoura"}
-)
+def get_detector(model_name):
+    """
+    Returns a detector instance based on the provided model name.
+    """
+    if model_name == 'custom':
+        return GunDetector(
+            model_path="best_3.pt",
+            gun_class_ids=[0,1],
+            conf_threshold=0.1,
+            gun_map={0: "Faca", 1: "Tesoura"}
+        )
+    else:
+        return GunDetector(
+            model_path="yolo11x.pt",
+            gun_class_ids=[42, 43, 76],
+            conf_threshold=0.55,
+            gun_map={42: "Garfo", 43: "Faca", 76: "Tesoura"}
+        )
+
+# Separate image saver instances for webcam and video.
 image_saver_webcam = ImageSaver(base_folder="images/detections/webcam")
 image_saver_video = ImageSaver(base_folder="images/detections/videos")
 
-# Create the video controller using the webcam (0)
-video_controller = VideoController(0, gun_detector, image_saver_webcam, save_interval=5)
+@app.route('/')
+def index():
+    # Render the index.html template.
+    return render_template('index.html')
 
 @app.route('/video_feed')
 def video_feed():
-    """
-    Streams the webcam feed with detection overlays.
-    """
+    model_name = request.args.get('model', 'yolo')
+    detector = get_detector(model_name)
+    video_controller = VideoController(0, detector, image_saver_webcam, save_interval=5)
     return Response(video_controller.generate_frames(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_video():
-    """
-    Allows users to upload a video file for analysis.
-    """
     if request.method == 'POST':
         file = request.files.get('video')
+        model_name = request.form.get('model', 'yolo')
+        detector = get_detector(model_name)
         if file:
             now = datetime.now()
             date_str = now.strftime("%Y_%m_%d-%H_%M_%S")
             file_name = file.filename
-            folder_path = "uploads/videos/" + date_str
-            file_path = folder_path + "/" + file_name
-
-            # Create the directory if it does not exist
+            folder_path = os.path.join("uploads", "videos", date_str)
+            file_path = os.path.join(folder_path, file_name)
             os.makedirs(folder_path, exist_ok=True)
-
             file.save(file_path)
-            # Create a new controller for the uploaded video.
-            upload_controller = VideoController(file_path, gun_detector, image_saver_video, save_interval=1)
+            upload_controller = VideoController(file_path, detector, image_saver_video, save_interval=1)
             return Response(upload_controller.generate_frames(),
                             mimetype='multipart/x-mixed-replace; boundary=frame')
+    # Render the upload page (create an upload.html template similarly if needed)
     return render_template('upload.html')
-
-@app.route('/')
-def index():
-    """
-    Home page.
-    """
-    return render_template('index.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

@@ -1,11 +1,31 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Gun Detector</title>
+  <title>Detector Model Selection</title>
 </head>
 <body>
-    <h1>Gun Detector</h1>
-    <p>Webcam Feed: <a href="/video_feed">View Webcam Feed</a></p>
-    <p>Upload Video: <a href="/upload">Upload a Video</a></p>
+  <h1>Select a Detection Model</h1>
+  
+  <!-- Form for the Webcam Feed -->
+  <form action="/video_feed" method="get">
+    <label for="model">Choose a model for the webcam feed:</label>
+    <select name="model" id="model">
+      <option value="yolo">YOLO Model</option>
+      <option value="custom">Custom Model</option>
+    </select>
+    <button type="submit">View Webcam Feed</button>
+  </form>
+  
+  <br>
+  
+  <!-- Form for the Video Upload -->
+  <form action="/upload" method="get">
+    <label for="upload_model">Choose a model for video analysis:</label>
+    <select name="model" id="upload_model">
+      <option value="yolo">YOLO Model</option>
+      <option value="custom">Custom Model</option>
+    </select>
+    <button type="submit">Upload a Video</button>
+  </form>
 </body>
 </html>
