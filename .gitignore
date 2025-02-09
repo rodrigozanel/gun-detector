@@ -10,4 +10,3 @@ ENV/
 .venv/
 .DS_Store
 /images/detections/
-/.env

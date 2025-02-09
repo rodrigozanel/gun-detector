@@ -4,8 +4,9 @@ import cv2
 #from skimage.metrics import structural_similarity as ssim
 # import structural_similarity from scikit-image
 import numpy as np
-from services.NotificationDTO import NotificationDTO
-
+from domain.NotificationDTO import NotificationDTO
+import os
+from dotenv import load_dotenv
 from services.NotificationService import NotificationService
 
 
@@ -33,6 +34,10 @@ class VideoController:
     detectionsToNotify = []
     initialTime = time.time()
 
+    notification_interval = int(os.getenv("NOTIFICATIONS_INTERVAL", 30))
+    notifications_enabled = os.getenv("NOTIFICATIONS_ENABLED", True)
+    notifications_bucket_size = int(os.getenv("NOTIFICATIONS_BUCKET_SIZE", 5))
+
     """
     Handles the video stream: reading frames, passing them to the detector,
     and saving images when a detection is made (with a configurable save interval).
@@ -58,11 +63,15 @@ class VideoController:
     def process_frame(self):
 
         # Check if it's time to send the notifications
-        passedTime = time.time() - self.initialTime
-        if (passedTime >= 30 and len(self.detectionsToNotify) >= 0) or len(self.detectionsToNotify) >= 5:
-            self.notification_service.send_notification(self.detectionsToNotify)
-            self.detectionsToNotify = []
-            self.initialTime = time.time()
+        passedTime = round(time.time() - self.initialTime, 0)
+        print(f"Next notification in {self.notification_interval - passedTime} seconds or when {self.notifications_bucket_size} detections are collected (currently {len(self.detectionsToNotify)}).")
+        if (passedTime >= self.notification_interval and len(self.detectionsToNotify) >= 0) or len(self.detectionsToNotify) >= self.notifications_bucket_size:
+            if self.notifications_enabled:
+                self.notification_service.send_notification(self.detectionsToNotify)
+                self.detectionsToNotify = []
+                self.initialTime = time.time()
+            else :
+                print("Notifications are disabled.")
 
         file_path = None
         success, frame = self.cap.read()

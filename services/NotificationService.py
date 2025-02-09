@@ -33,16 +33,18 @@ class NotificationService:
                     # [label, file_path, current_time
                     print(f"Detected {detection.get_label()} at {detection.get_current_time()}.")
                     print(f"Saved image to {detection.get_file_path()}.")
-                    self.file_repository.upload_file(file_name=detection.get_file_path())
+                    object_name = f"{detection.get_label()}_{detection.get_current_time()}.jpg"
+                    self.file_repository.upload_file(file_path=detection.get_file_path(), object_name=object_name)
 
                 # Send an email with the detections
                 if len(detections_to_notify) > 0:
+                    recipients = os.getenv("NOTIFICATIONS_RECIPIENTS").split(",")
                     print("Sending email notification...")
-                    email = 'rodrigozanelsp@gmail.com'
                     subject = 'Alerta de detecção de armas! Fique seguro! [Isto é um teste]'
-                    body = self.generate_html_body(detections_to_notify)
-                    self.brevo_service.send_email(email, subject, body)
-                    print("Email sent successfully!")
+                    for email in recipients:
+                        body = self.generate_html_body(detections_to_notify)
+                        self.brevo_service.send_email(email, subject, body)
+                        print("Email sent successfully to ", email + "!")
                 else :
                     print("No detections to notify.")
 
@@ -66,9 +68,8 @@ class NotificationService:
         # Add a note informing the user about it's a test
         body += "<p>Este é um e-mail de teste para informá-lo sobre a detecção de uma arma..</p>"
         for detection in detections:
-            # extract the file name from the detection object (it's the last part of the path)
-            file_path = detection.get_file_path()
-            file_name = os.path.basename(file_path)
+            # Generate the filename randomly
+            file_name = f"{detection.get_label()}_{detection.get_current_time()}.jpg"
             file_url = f"{self.cdn_url}{file_name}"
             print(f"Adding image {file_name} to the email body...")
             print(f"The image URL is: {file_url}")
