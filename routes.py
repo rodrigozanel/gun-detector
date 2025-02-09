@@ -1,5 +1,5 @@
 # routes.py
-from flask import Flask, Response, request, render_template
+from flask import Flask, Response, request, render_template, redirect, url_for
 from models.gun_detector import GunDetector
 #from models.custom_detector import CustomDetector  # If implemented
 from models.image_saver import ImageSaver
@@ -40,17 +40,25 @@ def index():
 @app.route('/video_feed')
 def video_feed():
     model_name = request.args.get('model', 'yolo')
+    print(f"Using model We: {model_name}")
     detector = get_detector(model_name)
     video_controller = VideoController(0, detector, image_saver_webcam, save_interval=5)
     return Response(video_controller.generate_frames(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
+@app.route('/view_feed')
+def view_feed():
+    model_name = request.args.get('model')
+    print(f"Using model View: {model_name}")
+    return render_template('video_view.html',  model=model_name)
+
+# Rota para processar o upload de vídeo.
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_video():
     if request.method == 'POST':
         file = request.files.get('video')
-        model_name = request.form.get('model', 'yolo')
-        detector = get_detector(model_name)
+        model_name = request.form.get('model').lower()
+        print(f"Using model: {model_name}")
         if file:
             now = datetime.now()
             date_str = now.strftime("%Y_%m_%d-%H_%M_%S")
@@ -59,11 +67,29 @@ def upload_video():
             file_path = os.path.join(folder_path, file_name)
             os.makedirs(folder_path, exist_ok=True)
             file.save(file_path)
-            upload_controller = VideoController(file_path, detector, image_saver_video, save_interval=1)
-            return Response(upload_controller.generate_frames(),
-                            mimetype='multipart/x-mixed-replace; boundary=frame')
-    # Render the upload page (create an upload.html template similarly if needed)
-    return render_template('upload.html')
+            # Após salvar o vídeo, redireciona para a página de visualização do vídeo.
+            return redirect(url_for('view_video_upload', model=model_name, file=file_path))
+    model_name = request.args.get('model')
+    return render_template('upload.html', model=model_name)
+
+# Rota que renderiza o template com o layout para análise de vídeo.
+@app.route('/view_video_upload')
+def view_video_upload():
+    model_name = request.args.get('model', 'yolo').lower()
+    file_path = request.args.get('file')
+    return render_template('video_upload_view.html', model=model_name, file=file_path)
+
+# Rota que fornece o feed de vídeo processado para o vídeo enviado.
+@app.route('/video_upload_feed')
+def video_upload_feed():
+    model_name = request.args.get('model', 'yolo').lower()
+    file_path = request.args.get('file')
+    print(f"Using model (upload): {model_name} para arquivo {file_path}")
+    detector = get_detector(model_name)
+    video_controller = VideoController(file_path, detector, image_saver_video, save_interval=1)
+    return Response(video_controller.generate_frames(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
