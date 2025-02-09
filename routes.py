@@ -40,6 +40,7 @@ def index():
 @app.route('/video_feed')
 def video_feed():
     model_name = request.args.get('model', 'yolo')
+    print(f"Using model We: {model_name}")
     detector = get_detector(model_name)
     video_controller = VideoController(0, detector, image_saver_webcam, save_interval=5)
     return Response(video_controller.generate_frames(),
@@ -49,7 +50,7 @@ def video_feed():
 def upload_video():
     if request.method == 'POST':
         file = request.files.get('video')
-        model_name = request.form.get('model', 'yolo')
+        model_name = request.form.get('model')
         detector = get_detector(model_name)
         if file:
             now = datetime.now()
@@ -64,6 +65,12 @@ def upload_video():
                             mimetype='multipart/x-mixed-replace; boundary=frame')
     # Render the upload page (create an upload.html template similarly if needed)
     return render_template('upload.html')
+
+@app.route('/view_feed')
+def view_feed():
+    model_name = request.args.get('model')
+    print(f"Using model View: {model_name}")
+    return render_template('video_view.html',  model=model_name)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
