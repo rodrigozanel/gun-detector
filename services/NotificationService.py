@@ -67,7 +67,8 @@ class NotificationService:
         body += "<p>Este é um e-mail de teste para informá-lo sobre a detecção de uma arma..</p>"
         for detection in detections:
             # extract the file name from the detection object (it's the last part of the path)
-            file_name = detection.get_file_path().split("\\")[-1]
+            file_path = detection.get_file_path()
+            file_name = os.path.basename(file_path)
             file_url = f"{self.cdn_url}{file_name}"
             print(f"Adding image {file_name} to the email body...")
             print(f"The image URL is: {file_url}")
