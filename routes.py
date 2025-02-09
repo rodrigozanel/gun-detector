@@ -15,14 +15,14 @@ def get_detector(model_name):
     """
     if model_name == 'custom':
         return GunDetector(
-            model_path="best_3.pt",
-            gun_class_ids=[0,1],
-            conf_threshold=0.1,
-            gun_map={0: "Faca", 1: "Tesoura"}
+            model_path="best_5.pt",
+            gun_class_ids=[0,1,2,3],
+            conf_threshold=0.55,
+            gun_map={0: "Faca", 1: "Tesoura", 2: "Pistola", 3: "Pistola"}
         )
     else:
         return GunDetector(
-            model_path="yolo11x.pt",
+            model_path="yolo11m.pt",
             gun_class_ids=[42, 43, 76],
             conf_threshold=0.55,
             gun_map={42: "Garfo", 43: "Faca", 76: "Tesoura"}
