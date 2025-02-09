@@ -28,7 +28,7 @@ class SendinblueService:
 
     def send_email(self, email, subject, body):
         send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
-            sender={ "name": "Rodrigo", "email": self.from_email },
+            sender={ "name": "IA For Dev - Grupo 7 (FIAP)", "email": self.from_email },
             to=[{"email": email}],
             subject=subject,
             html_content=body)

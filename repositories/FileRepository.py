@@ -13,11 +13,11 @@ class FileRepository:
         self.access_key = os.getenv("AWS_ACCESS_KEY")
         self.secret_key = os.getenv("AWS_SECRET_KEY")
 
-    def upload_file(self, file_name, object_name=None):
+    def upload_file(self, file_path, object_name=None):
         """Upload a file to an S3 bucket
 
 
-        :param file_name: File to upload
+        :param file_path: File to upload
         :param bucket: Bucket to upload to
         :param object_name: S3 object name. If not specified then file_name is used
         :return: True if file was uploaded, else False
@@ -25,7 +25,7 @@ class FileRepository:
 
         # If S3 object_name was not specified, use file_name
         if object_name is None:
-            object_name = os.path.basename(file_name)
+            object_name = os.path.basename(file_path)
 
         # Upload the file
         s3_client = boto3.client(
@@ -35,9 +35,9 @@ class FileRepository:
             aws_secret_access_key=self.secret_key
         )
         try:
-            print(f"Uploading {file_name} to {self.bucket_name}/{object_name}...")
+            print(f"Uploading {file_path} to {self.bucket_name}/{object_name}...")
             response = s3_client.upload_file(
-                file_name,
+                file_path,
                 self.bucket_name,
                 object_name,
                 ExtraArgs={'ContentType': 'image/jpeg'}
