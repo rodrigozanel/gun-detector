@@ -2,6 +2,7 @@
 import cv2
 import torch
 from ultralytics import YOLO
+import os
 
 class GunDetector:
     """
@@ -9,8 +10,14 @@ class GunDetector:
     to detect guns (or weapon-like objects). This class is solely responsible
     for detection.
     """
+    _force_gpu = bool(os.getenv("FORCE_GPU", True))
+    
     def __init__(self, model_path, gun_class_ids, conf_threshold=0.55, gun_map=None, device=None):
-        self.device = device if device is not None else ("cuda" if torch.cuda.is_available() else "cpu")
+        # If force_gpu is set to True, the model will always run on GPU if available.
+        if self._force_gpu:
+            self.device = device if device is not None else ("cuda" if torch.cuda.is_available() else "cpu")
+        else:
+            self.device = "cpu"
         self.model = YOLO(model_path)
         self.model.to(self.device)
         self.gun_class_ids = gun_class_ids
