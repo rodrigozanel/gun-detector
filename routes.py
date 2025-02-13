@@ -22,9 +22,9 @@ def get_detector(model_name):
         )
     else:
         return GunDetector(
-            model_path="yolo11m.pt",
+            model_path="yolo11x.pt",
             gun_class_ids=[42, 43, 76],
-            conf_threshold=0.55,
+            conf_threshold=0.25,
             gun_map={42: "Garfo", 43: "Faca", 76: "Tesoura"}
         )
 

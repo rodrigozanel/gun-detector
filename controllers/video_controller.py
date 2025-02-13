@@ -8,6 +8,7 @@ from domain.NotificationDTO import NotificationDTO
 import os
 from dotenv import load_dotenv
 from services.NotificationService import NotificationService
+import os
 
 
 def mse(imageA, imageB):
@@ -111,10 +112,17 @@ class VideoController:
         Generator that yields JPEG-encoded frames.
         """
         _is_similar = False
+        _process_started = False
+        
         while True:
             processed_frame, _ = self.process_frame()
             if processed_frame is None:
+                # força o envio da notificação porque o video acabou
+                self.notification_service.send_notification(self.detectionsToNotify)
+                _process_started = False
                 break
+            else:
+                _process_started = True
 
             ret, buffer = cv2.imencode('.jpg', processed_frame)
             frame_bytes = buffer.tobytes()
